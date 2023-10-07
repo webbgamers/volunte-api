@@ -5,4 +5,4 @@ RUN cargo install --path .
 
 FROM debian:bullseye-slim
 COPY --from=builder /usr/local/cargo/bin/volunte-api /usr/local/bin/volunte-api
-CMD ["volunte-api", :$PORT]
+CMD ["volunte-api", :$URI, :$PORT]
