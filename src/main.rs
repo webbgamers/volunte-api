@@ -8,7 +8,7 @@ use futures::stream::TryStreamExt;
 use actix_cors::Cors;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use mongodb::{
-    bson::{doc, oid::ObjectId, bson},
+    bson::{bson, doc, oid::ObjectId},
     options::FindOptions,
     Client,
 };
@@ -33,7 +33,9 @@ async fn register(client: web::Data<Client>, form: web::Json<Register>) -> HttpR
 
 #[get("/event")]
 async fn get_event(client: web::Data<Client>, form: web::Json<GetById>) -> HttpResponse {
-    let collection = client.database(DB_MAIN).collection::<EventFromBSON>(COL_EVENTS);;
+    let collection = client
+        .database(DB_MAIN)
+        .collection::<EventFromBSON>(COL_EVENTS);
     let result = collection
         .find_one(doc! {"_id": bson!(&form.id)}, None)
         .await;
@@ -50,7 +52,9 @@ async fn get_event(client: web::Data<Client>, form: web::Json<GetById>) -> HttpR
 
 #[get("/login")]
 async fn login(client: web::Data<Client>, form: web::Json<Login>) -> HttpResponse {
-    let collection = client.database(DB_MAIN).collection::<UserFromBSON>(COL_USERS);
+    let collection = client
+        .database(DB_MAIN)
+        .collection::<UserFromBSON>(COL_USERS);
     let result = collection
         .find_one(
             doc! {"email": &form.email, "password": &form.password},
@@ -70,7 +74,9 @@ async fn login(client: web::Data<Client>, form: web::Json<Login>) -> HttpRespons
 
 #[get("/user")]
 async fn get_user(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpResponse {
-    let collection = client.database(DB_MAIN).collection::<UserFromBSON>(COL_USERS);
+    let collection = client
+        .database(DB_MAIN)
+        .collection::<UserFromBSON>(COL_USERS);
     let result = collection
         .find_one(doc! {"_id": ObjectId::parse_str(&form.id).unwrap()}, None)
         .await;
@@ -136,9 +142,7 @@ async fn main() -> std::io::Result<()> {
     println!("Connected to MongoDB.");
 
     HttpServer::new(move || {
-        let cors = Cors::default()
-            .send_wildcard()
-            .max_age(3600);
+        let cors = Cors::default().send_wildcard().max_age(3600);
 
         App::new()
             .wrap(cors)
