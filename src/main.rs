@@ -97,7 +97,8 @@ async fn get_events_preview(client: web::Data<Client>) -> HttpResponse {
 /*
 #[get("/user/events")]
 async fn user_get_events(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<
+    let collection = client.database(DB_NAME).collection::<TimeSlotFromBSON>("events");
+    let options = FindOptions::builder().projection( doc! {})
 }*/
 
 
@@ -122,9 +123,10 @@ async fn main() -> std::io::Result<()> {
             .service(login)
             .service(get_user)
             .service(get_events_preview)
+            //.service(user_get_events)
     })
     .bind((
-        "127.0.0.1",
+        "0.0.0.0",
         env::var("PORT")
             .map(|a| a.parse().expect("Invalid port."))
             .unwrap_or(8080),
