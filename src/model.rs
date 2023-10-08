@@ -1,6 +1,6 @@
 use mongodb::bson::serde_helpers::{
-    deserialize_hex_string_from_object_id, deserialize_rfc3339_string_from_bson_datetime, serialize_hex_string_as_object_id,
-    serialize_rfc3339_string_as_bson_datetime,
+    deserialize_hex_string_from_object_id, deserialize_rfc3339_string_from_bson_datetime,
+    serialize_hex_string_as_object_id, serialize_rfc3339_string_as_bson_datetime,
 };
 use serde::{Deserialize, Serialize};
 
@@ -169,4 +169,10 @@ pub struct Login {
     pub password: String,
 }
 
-
+#[derive(Deserialize, Serialize)]
+pub struct TimeSlotPreviewFromBSON {
+    #[serde(deserialize_with = "deserialize_rfc3339_string_from_bson_datetime")]
+    pub start: String,
+    #[serde(deserialize_with = "deserialize_rfc3339_string_from_bson_datetime")]
+    pub end: String,
+}

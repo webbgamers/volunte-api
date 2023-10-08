@@ -8,14 +8,17 @@ use futures::stream::TryStreamExt;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use mongodb::{
     bson::{doc, oid::ObjectId},
-    Client, options::FindOptions,
+    options::FindOptions,
+    Client,
 };
 
 const DB_NAME: &str = "volunte";
+const EVENTS: &str = "events";
+const USERS: &str = "users";
 
 #[post("/register")]
 async fn register(client: web::Data<Client>, form: web::Json<Register>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection("users");
+    let collection = client.database(DB_NAME).collection(USERS);
     let result = collection.insert_one(form.into_inner(), None).await;
     match result {
         Ok(result) => HttpResponse::Ok().json(RegisterResponse {
@@ -29,9 +32,7 @@ async fn register(client: web::Data<Client>, form: web::Json<Register>) -> HttpR
 
 #[get("/event")]
 async fn get_event(client: web::Data<Client>, form: web::Json<GetEvent>) -> HttpResponse {
-    let collection = client
-        .database(DB_NAME)
-        .collection::<EventFromBSON>("events");
+    let collection = client.database(DB_NAME).collection::<EventFromBSON>(EVENTS);
     let result = collection
         .find_one(doc! { "_id": ObjectId::parse_str(&form.id).unwrap()}, None)
         .await;
@@ -48,7 +49,7 @@ async fn get_event(client: web::Data<Client>, form: web::Json<GetEvent>) -> Http
 
 #[get("/login")]
 async fn login(client: web::Data<Client>, form: web::Json<Login>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<UserFromBSON>("users");
+    let collection = client.database(DB_NAME).collection::<UserFromBSON>(USERS);
     let result = collection
         .find_one(
             doc! {"email": &form.email, "password": &form.password},
@@ -68,7 +69,7 @@ async fn login(client: web::Data<Client>, form: web::Json<Login>) -> HttpRespons
 
 #[get("/user")]
 async fn get_user(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<UserFromBSON>("users");
+    let collection = client.database(DB_NAME).collection::<UserFromBSON>(USERS);
     let result = collection
         .find_one(doc! {"_id": ObjectId::parse_str(&form.id).unwrap()}, None)
         .await;
@@ -83,24 +84,42 @@ async fn get_user(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpRe
     }
 }
 
-//Bela is very sorry for this
+//Bela is very cool for this
 #[get("/events")]
 async fn get_events_preview(client: web::Data<Client>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<EventPreviewFromBSON>("events");
-    let options = FindOptions::builder().projection( doc! {"name": 1, "description": 1, "address": 1}).build();
+    let collection = client
+        .database(DB_NAME)
+        .collection::<EventPreviewFromBSON>(EVENTS);
+    let options = FindOptions::builder()
+        .projection(doc! {"name": 1, "description": 1, "address": 1})
+        .build();
     let result = collection.find(None, options).await;
     match result {
         Ok(cursor) => HttpResponse::Ok().json(cursor.try_collect::<Vec<_>>().await.unwrap()),
-        Err(err) => HttpResponse::InternalServerError().json(ServerError {error: err.to_string(),}),
+        Err(err) => HttpResponse::InternalServerError().json(ServerError {
+            error: err.to_string(),
+        }),
     }
 }
-/*
+
 #[get("/user/events")]
 async fn user_get_events(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<TimeSlotFromBSON>("events");
-    let options = FindOptions::builder().projection( doc! {})
-}*/
-
+    let collection = client
+        .database(DB_NAME)
+        .collection::<TimeSlotPreviewFromBSON>(EVENTS);
+    let pipeline = vec![
+        doc! { "$unwind": "$timeslots"},
+        doc! { "$match": {"timeslots.volunteers": {"$in": ObjectId::parse_str(&form.id).unwrap()}}},
+        doc! { "$unset": ["volunteers", "requests"]},
+    ];
+    let result = collection.aggregate(pipeline, None).await;
+    match result {
+        Ok(cursor) => HttpResponse::Ok().json(cursor.try_collect::<Vec<_>>().await.unwrap()),
+        Err(err) => HttpResponse::InternalServerError().json(ServerError {
+            error: err.to_string(),
+        }),
+    }
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -123,7 +142,7 @@ async fn main() -> std::io::Result<()> {
             .service(login)
             .service(get_user)
             .service(get_events_preview)
-            //.service(user_get_events)
+            .service(user_get_events)
     })
     .bind((
         "0.0.0.0",
