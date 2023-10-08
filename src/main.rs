@@ -142,7 +142,8 @@ async fn main() -> std::io::Result<()> {
     println!("Connected to MongoDB.");
 
     HttpServer::new(move || {
-        let cors = Cors::default().send_wildcard().max_age(3600);
+
+        let cors = Cors::permissive().max_age(3600);
 
         App::new()
             .wrap(cors)
