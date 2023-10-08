@@ -12,13 +12,13 @@ use mongodb::{
     Client,
 };
 
-const DB_NAME: &str = "volunte";
-const EVENTS: &str = "events";
-const USERS: &str = "users";
+const DB_MAIN: &str = "volunte";
+const COL_EVENTS: &str = "events";
+const COL_USERS: &str = "users";
 
 #[post("/register")]
 async fn register(client: web::Data<Client>, form: web::Json<Register>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection(USERS);
+    let collection = client.database(DB_MAIN).collection(COL_USERS);
     let result = collection.insert_one(form.into_inner(), None).await;
     match result {
         Ok(result) => HttpResponse::Ok().json(RegisterResponse {
@@ -32,7 +32,7 @@ async fn register(client: web::Data<Client>, form: web::Json<Register>) -> HttpR
 
 #[get("/event")]
 async fn get_event(client: web::Data<Client>, form: web::Json<GetEvent>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<EventFromBSON>(EVENTS);
+    let collection = client.database(DB_MAIN).collection::<EventFromBSON>(COL_EVENTS);
     let result = collection
         .find_one(doc! { "_id": ObjectId::parse_str(&form.id).unwrap()}, None)
         .await;
@@ -49,7 +49,7 @@ async fn get_event(client: web::Data<Client>, form: web::Json<GetEvent>) -> Http
 
 #[get("/login")]
 async fn login(client: web::Data<Client>, form: web::Json<Login>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<UserFromBSON>(USERS);
+    let collection = client.database(DB_MAIN).collection::<UserFromBSON>(COL_USERS);
     let result = collection
         .find_one(
             doc! {"email": &form.email, "password": &form.password},
@@ -69,7 +69,7 @@ async fn login(client: web::Data<Client>, form: web::Json<Login>) -> HttpRespons
 
 #[get("/user")]
 async fn get_user(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<UserFromBSON>(USERS);
+    let collection = client.database(DB_MAIN).collection::<UserFromBSON>(COL_USERS);
     let result = collection
         .find_one(doc! {"_id": ObjectId::parse_str(&form.id).unwrap()}, None)
         .await;
@@ -88,8 +88,8 @@ async fn get_user(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpRe
 #[get("/events")]
 async fn get_events_preview(client: web::Data<Client>) -> HttpResponse {
     let collection = client
-        .database(DB_NAME)
-        .collection::<EventPreviewFromBSON>(EVENTS);
+        .database(DB_MAIN)
+        .collection::<EventPreviewFromBSON>(COL_EVENTS);
     let options = FindOptions::builder()
         .projection(doc! {"name": 1, "description": 1, "address": 1})
         .build();
@@ -105,8 +105,8 @@ async fn get_events_preview(client: web::Data<Client>) -> HttpResponse {
 #[get("/user/events")]
 async fn user_get_events(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpResponse {
     let collection = client
-        .database(DB_NAME)
-        .collection::<TimeSlotPreviewFromBSON>(EVENTS);
+        .database(DB_MAIN)
+        .collection::<TimeSlotPreviewFromBSON>(COL_EVENTS);
     let pipeline = vec![
         doc! { "$unwind": "$timeslots"},
         doc! { "$match": {"timeslots.volunteers": {"$in": ObjectId::parse_str(&form.id).unwrap()}}},
