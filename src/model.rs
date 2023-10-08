@@ -1,6 +1,5 @@
 use mongodb::bson::serde_helpers::{
-    deserialize_hex_string_from_object_id, deserialize_rfc3339_string_from_bson_datetime,
-    hex_string_as_object_id, rfc3339_string_as_bson_datetime, serialize_hex_string_as_object_id,
+    deserialize_hex_string_from_object_id, deserialize_rfc3339_string_from_bson_datetime, serialize_hex_string_as_object_id,
     serialize_rfc3339_string_as_bson_datetime,
 };
 use serde::{Deserialize, Serialize};
@@ -72,6 +71,17 @@ pub struct EventFromBSON {
     pub address: String,
     pub timeslots: Vec<TimeSlotFromBSON>,
     pub owner: OwnerFromBSON,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct EventPreviewFromBSON {
+    #[serde(
+        rename(deserialize = "_id"),
+        deserialize_with = "deserialize_hex_string_from_object_id"
+    )]
+    pub id: String,
+    pub name: String,
+    pub address: String,
 }
 
 #[derive(Deserialize, Serialize)]

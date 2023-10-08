@@ -3,10 +3,12 @@ use model::*;
 
 use std::env;
 
+use futures::stream::TryStreamExt;
+
 use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use mongodb::{
     bson::{doc, oid::ObjectId},
-    Client,
+    Client, options::FindOptions,
 };
 
 const DB_NAME: &str = "volunte";
@@ -82,23 +84,26 @@ async fn get_user(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpRe
 }
 
 //Bela is very sorry for this
-#[get("/event_preview")]
-async fn get_events_preview(Client: web::Data<Client>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<EventFromBSON>("events");
-    let result = collection.find_one(doc! {"_id": ObjectId::parse_str(&form.id).unwrap()}, None).await;
+#[get("/events")]
+async fn get_events_preview(client: web::Data<Client>) -> HttpResponse {
+    let collection = client.database(DB_NAME).collection::<EventPreviewFromBSON>("events");
+    let options = FindOptions::builder().projection( doc! {"name": 1, "description": 1, "address": 1}).build();
+    let result = collection.find(None, options).await;
     match result {
-        Ok(Some(event)) => HttpResponse::Ok().json(event),
-        Ok(None) => HttpResponse::NotFound().json(ServerError {error: format!("No event found with id {}", form.id),}),
+        Ok(cursor) => HttpResponse::Ok().json(cursor.try_collect::<Vec<_>>().await.unwrap()),
         Err(err) => HttpResponse::InternalServerError().json(ServerError {error: err.to_string(),}),
     }
 }
-
+/*
+#[get("/user/events")]
+async fn user_get_events(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpResponse {
+    let collection = client.database(DB_NAME).collection::<
+}*/
 
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let mdb_client = Client::with_uri_str(args.get(1).expect("Missing Mongo URI."))
+    let mdb_client = Client::with_uri_str(env::var("URI").expect("Missing Mongo URI."))
         .await
         .expect("Failed to connect to MongoDB.");
 
@@ -120,7 +125,7 @@ async fn main() -> std::io::Result<()> {
     })
     .bind((
         "127.0.0.1",
-        args.get(2)
+        env::var("PORT")
             .map(|a| a.parse().expect("Invalid port."))
             .unwrap_or(8080),
     ))?
