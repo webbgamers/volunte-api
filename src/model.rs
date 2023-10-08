@@ -26,14 +26,18 @@ pub struct GetEvent {
     pub id: String,
 }
 
-#[derive(Deserialize)]
-pub struct GetUser {
+#[derive(Deserialize, Serialize)]
+pub struct GetById {
+    #[serde(
+        rename(serialize = "_id"),
+        serialize_with = "serialize_hex_string_as_object_id"
+    )]
     pub id: String,
 }
 
 #[derive(Deserialize)]
-pub struct GetEventsPreview {
-    //idk yet
+pub struct GetUser {
+    pub id: String,
 }
 
 #[derive(Deserialize, Serialize)]

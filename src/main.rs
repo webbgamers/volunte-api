@@ -5,9 +5,10 @@ use std::env;
 
 use futures::stream::TryStreamExt;
 
+use actix_cors::Cors;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use mongodb::{
-    bson::{doc, oid::ObjectId},
+    bson::{doc, oid::ObjectId, bson},
     options::FindOptions,
     Client,
 };
@@ -31,10 +32,10 @@ async fn register(client: web::Data<Client>, form: web::Json<Register>) -> HttpR
 }
 
 #[get("/event")]
-async fn get_event(client: web::Data<Client>, form: web::Json<GetEvent>) -> HttpResponse {
-    let collection = client.database(DB_MAIN).collection::<EventFromBSON>(COL_EVENTS);
+async fn get_event(client: web::Data<Client>, form: web::Json<GetById>) -> HttpResponse {
+    let collection = client.database(DB_MAIN).collection::<EventFromBSON>(COL_EVENTS);;
     let result = collection
-        .find_one(doc! { "_id": ObjectId::parse_str(&form.id).unwrap()}, None)
+        .find_one(doc! {"_id": bson!(&form.id)}, None)
         .await;
     match result {
         Ok(Some(event)) => HttpResponse::Ok().json(event),
@@ -135,7 +136,12 @@ async fn main() -> std::io::Result<()> {
     println!("Connected to MongoDB.");
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .send_wildcard()
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)
             .app_data(web::Data::new(mdb_client.clone()))
             .service(register)
             .service(get_event)
