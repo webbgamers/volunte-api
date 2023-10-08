@@ -27,6 +27,16 @@ pub struct GetEvent {
     pub id: String,
 }
 
+#[derive(Deserialize)]
+pub struct GetUser {
+    pub id: String,
+}
+
+#[derive(Deserialize)]
+pub struct GetEventsPreview {
+    //idk yet
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct UserFromBSON {
     #[serde(
@@ -149,7 +159,4 @@ pub struct Login {
     pub password: String,
 }
 
-#[derive(Deserialize)]
-pub struct GetUser {
-    pub id: String,
-}
+
