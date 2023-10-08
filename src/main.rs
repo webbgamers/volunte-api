@@ -5,7 +5,7 @@ use std::env;
 
 use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use mongodb::{
-    bson::{doc, oid::ObjectId, Document},
+    bson::{doc, oid::ObjectId},
     Client,
 };
 
@@ -27,7 +27,9 @@ async fn register(client: web::Data<Client>, form: web::Json<Register>) -> HttpR
 
 #[get("/event")]
 async fn get_event(client: web::Data<Client>, form: web::Json<GetEvent>) -> HttpResponse {
-    let collection = client.database(DB_NAME).collection::<EventFromBSON>("events");
+    let collection = client
+        .database(DB_NAME)
+        .collection::<EventFromBSON>("events");
     let result = collection
         .find_one(doc! { "_id": ObjectId::parse_str(&form.id).unwrap()}, None)
         .await;
@@ -45,25 +47,41 @@ async fn get_event(client: web::Data<Client>, form: web::Json<GetEvent>) -> Http
 #[get("/login")]
 async fn login(client: web::Data<Client>, form: web::Json<Login>) -> HttpResponse {
     let collection = client.database(DB_NAME).collection::<UserFromBSON>("users");
-    let result = collection.find_one(doc! {"email": &form.email, "password": &form.password}, None).await;
+    let result = collection
+        .find_one(
+            doc! {"email": &form.email, "password": &form.password},
+            None,
+        )
+        .await;
     match result {
         Ok(Some(user)) => HttpResponse::Ok().json(user),
-        Ok(None) => HttpResponse::Forbidden().json(ServerError { error: "Invalid email or password".to_string()}),
-        Err(err) => HttpResponse::InternalServerError().json(ServerError { error: err.to_string()})
+        Ok(None) => HttpResponse::Forbidden().json(ServerError {
+            error: "Invalid email or password".to_string(),
+        }),
+        Err(err) => HttpResponse::InternalServerError().json(ServerError {
+            error: err.to_string(),
+        }),
     }
 }
 
 #[get("/user")]
 async fn get_user(client: web::Data<Client>, form: web::Json<GetUser>) -> HttpResponse {
     let collection = client.database(DB_NAME).collection::<UserFromBSON>("users");
-    let result = collection.find_one(doc! {"_id": ObjectId::parse_str(&form.id).unwrap()}, None).await;
+    let result = collection
+        .find_one(doc! {"_id": ObjectId::parse_str(&form.id).unwrap()}, None)
+        .await;
     match result {
         Ok(Some(user)) => HttpResponse::Ok().json(user),
-        Ok(None) => HttpResponse::NotFound().json(ServerError { error: format!("No user found with id {}", form.id)}),
-        Err(err) => HttpResponse::InternalServerError().json(ServerError { error: err.to_string()})
+        Ok(None) => HttpResponse::NotFound().json(ServerError {
+            error: format!("No user found with id {}", form.id),
+        }),
+        Err(err) => HttpResponse::InternalServerError().json(ServerError {
+            error: err.to_string(),
+        }),
     }
-
 }
+
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

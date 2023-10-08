@@ -1,4 +1,8 @@
-use mongodb::bson::serde_helpers::{rfc3339_string_as_bson_datetime, hex_string_as_object_id, deserialize_hex_string_from_object_id, serialize_hex_string_as_object_id, deserialize_rfc3339_string_from_bson_datetime, serialize_rfc3339_string_as_bson_datetime};
+use mongodb::bson::serde_helpers::{
+    deserialize_hex_string_from_object_id, deserialize_rfc3339_string_from_bson_datetime,
+    hex_string_as_object_id, rfc3339_string_as_bson_datetime, serialize_hex_string_as_object_id,
+    serialize_rfc3339_string_as_bson_datetime,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -23,30 +27,36 @@ pub struct GetEvent {
     pub id: String,
 }
 
-
 #[derive(Deserialize, Serialize)]
 pub struct UserFromBSON {
-    #[serde(rename(deserialize="_id"), deserialize_with="deserialize_hex_string_from_object_id")]
+    #[serde(
+        rename(deserialize = "_id"),
+        deserialize_with = "deserialize_hex_string_from_object_id"
+    )]
     pub id: String,
     pub email: String,
     pub name: String,
     pub password: String,
 }
-
 
 #[derive(Deserialize, Serialize)]
 pub struct UserFromJSON {
-    #[serde(rename(serialize="_id"), serialize_with="serialize_hex_string_as_object_id")]
+    #[serde(
+        rename(serialize = "_id"),
+        serialize_with = "serialize_hex_string_as_object_id"
+    )]
     pub id: String,
     pub email: String,
     pub name: String,
     pub password: String,
 }
 
-
 #[derive(Deserialize, Serialize)]
 pub struct EventFromBSON {
-    #[serde(rename(deserialize="_id"), deserialize_with="deserialize_hex_string_from_object_id")]
+    #[serde(
+        rename(deserialize = "_id"),
+        deserialize_with = "deserialize_hex_string_from_object_id"
+    )]
     pub id: String,
     pub name: String,
     pub address: String,
@@ -56,14 +66,16 @@ pub struct EventFromBSON {
 
 #[derive(Deserialize, Serialize)]
 pub struct EventFromJSON {
-    #[serde(rename(serialize="_id"), serialize_with="serialize_hex_string_as_object_id")]
+    #[serde(
+        rename(serialize = "_id"),
+        serialize_with = "serialize_hex_string_as_object_id"
+    )]
     pub id: String,
     pub name: String,
     pub address: String,
     pub timeslots: Vec<TimeSlotFromJSON>,
     pub owner: OwnerFromJSON,
 }
-
 
 #[derive(Deserialize, Serialize)]
 pub struct TimeSlotFromBSON {
@@ -77,18 +89,17 @@ pub struct TimeSlotFromBSON {
 
 #[derive(Deserialize, Serialize)]
 pub struct TimeSlotFromJSON {
-    #[serde(serialize_with="serialize_rfc3339_string_as_bson_datetime")]
+    #[serde(serialize_with = "serialize_rfc3339_string_as_bson_datetime")]
     pub start: String,
-    #[serde(serialize_with="serialize_rfc3339_string_as_bson_datetime")]
+    #[serde(serialize_with = "serialize_rfc3339_string_as_bson_datetime")]
     pub end: String,
     pub volunteers: Vec<VolunteerFromJSON>,
     pub requests: Vec<RequestFromJSON>,
 }
 
-
 #[derive(Deserialize, Serialize)]
 pub struct VolunteerFromBSON {
-    #[serde(deserialize_with="deserialize_hex_string_from_object_id")]
+    #[serde(deserialize_with = "deserialize_hex_string_from_object_id")]
     pub id: String,
     pub name: String,
     pub role: String,
@@ -96,7 +107,7 @@ pub struct VolunteerFromBSON {
 
 #[derive(Deserialize, Serialize)]
 pub struct VolunteerFromJSON {
-    #[serde(serialize_with="serialize_hex_string_as_object_id")]
+    #[serde(serialize_with = "serialize_hex_string_as_object_id")]
     pub id: String,
     pub name: String,
     pub role: String,
@@ -104,7 +115,7 @@ pub struct VolunteerFromJSON {
 
 #[derive(Deserialize, Serialize)]
 pub struct RequestFromBSON {
-    #[serde(deserialize_with="deserialize_hex_string_from_object_id")]
+    #[serde(deserialize_with = "deserialize_hex_string_from_object_id")]
     pub id: String,
     pub name: String,
     pub roles: Vec<String>,
@@ -112,7 +123,7 @@ pub struct RequestFromBSON {
 
 #[derive(Deserialize, Serialize)]
 pub struct RequestFromJSON {
-    #[serde(serialize_with="serialize_hex_string_as_object_id")]
+    #[serde(serialize_with = "serialize_hex_string_as_object_id")]
     pub id: String,
     pub name: String,
     pub roles: Vec<String>,
@@ -120,19 +131,17 @@ pub struct RequestFromJSON {
 
 #[derive(Deserialize, Serialize)]
 pub struct OwnerFromBSON {
-    #[serde(deserialize_with="deserialize_hex_string_from_object_id")]
+    #[serde(deserialize_with = "deserialize_hex_string_from_object_id")]
     pub id: String,
     pub name: String,
 }
-
 
 #[derive(Deserialize, Serialize)]
 pub struct OwnerFromJSON {
-    #[serde(serialize_with="serialize_hex_string_as_object_id")]
+    #[serde(serialize_with = "serialize_hex_string_as_object_id")]
     pub id: String,
     pub name: String,
 }
-
 
 #[derive(Deserialize)]
 pub struct Login {
